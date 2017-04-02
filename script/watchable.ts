@@ -8,10 +8,6 @@ interface IListenerFull extends IListener {
 
 class Watchable {
 	private clone: any;
-	static instance(properties, listeners: IListenerFull[] = []): Watchable {
-		var w = new Watchable(properties, listeners);
-		return w;
-	}
 	constructor(private properties, private listeners: IListenerFull[] = []) {
 		var self = this;
 

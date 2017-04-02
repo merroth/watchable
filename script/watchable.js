@@ -24,11 +24,6 @@ var Watchable = (function () {
             writable: true
         });
     }
-    Watchable.instance = function (properties, listeners) {
-        if (listeners === void 0) { listeners = []; }
-        var w = new Watchable(properties, listeners);
-        return w;
-    };
     Watchable.prototype.setter = function (key, value) {
         var old = this.clone[key];
         this.clone[key] = value;
