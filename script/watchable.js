@@ -13,7 +13,7 @@ var Watchable = (function () {
                             return self.clone[b];
                         },
                         set: function (newValue) {
-                            self.setter(b, newValue);
+                            self.setter(b, newValue, a[b]);
                         }
                     });
                 })(properties, key);
@@ -24,18 +24,14 @@ var Watchable = (function () {
             writable: true
         });
     }
-    Watchable.prototype.setter = function (key, value) {
-        var old = this.clone[key];
-        this.clone[key] = value;
+    Watchable.prototype.setter = function (key, newValue, oldValue) {
+        this.clone[key] = newValue;
         for (var index = 0; index < this.listeners.length; index++) {
             var listener = this.listeners[index];
             if (listener.key === key.toString() || listener.key === "") {
-                listener.cb(value, old);
+                listener.cb(newValue, oldValue);
             }
         }
-    };
-    Watchable.prototype.getter = function (key) {
-        return this.clone[key];
     };
     Watchable.prototype.registerListener = function (listener) {
         listener.name = (listener.name === void 0 ? "" : listener.name.toString());

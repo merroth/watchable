@@ -20,7 +20,7 @@ class Watchable {
 							return self.clone[b];
 						},
 						set: function (newValue) {
-							self.setter(b, newValue);
+							self.setter(b, newValue, a[b]);
 						}
 					});
 				})(properties, key)
@@ -32,19 +32,14 @@ class Watchable {
 		});
 	}
 
-	private setter(key, value) {
-		var old = this.clone[key];
-		this.clone[key] = value;
+	private setter(key, newValue, oldValue) {
+		this.clone[key] = newValue;
 		for (var index = 0; index < this.listeners.length; index++) {
 			var listener = this.listeners[index];
 			if (listener.key === key.toString() || listener.key === "") {
-				listener.cb(value, old);
+				listener.cb(newValue, oldValue);
 			}
 		}
-	}
-
-	private getter(key) {
-		return this.clone[key];
 	}
 
 	public registerListener(listener: IListenerFull) {
@@ -56,6 +51,7 @@ class Watchable {
 			cb: listener.cb,
 			key: listener.key
 		});
+
 		return this;
 	}
 
