@@ -1,38 +1,65 @@
+/**
+ *
+ *
+ * @class Watchable
+ */
 var Watchable = (function () {
+    /**
+     * Creates an instance of Watchable.
+     * @param {Object} properties
+     * @param {IListenerFull[]} [listeners=[]]
+     *
+     * @memberOf Watchable
+     */
     function Watchable(properties, listeners) {
         if (listeners === void 0) { listeners = []; }
         this.properties = properties;
         this.listeners = listeners;
         var self = this;
-        this.clone = JSON.parse(JSON.stringify(properties));
         for (var key in properties) {
             if (properties.hasOwnProperty(key)) {
-                (function (a, b) {
+                var value = properties[key];
+                (function (a, b, c) {
                     Object.defineProperty(a, b, {
                         get: function () {
-                            return self.clone[b];
+                            return c;
                         },
                         set: function (newValue) {
-                            self.setter(b, newValue, a[b]);
+                            var o = c;
+                            c = newValue;
+                            self.setter(b, newValue, o);
                         }
                     });
-                })(properties, key);
+                })(properties, key, value);
             }
         }
-        Object.defineProperty(properties, "WatchAble", {
-            value: self,
-            writable: true
-        });
     }
+    /**
+     *
+     *
+     * @private
+     * @param {string} key
+     * @param {*} newValue
+     * @param {*} oldValue
+     *
+     * @memberOf Watchable
+     */
     Watchable.prototype.setter = function (key, newValue, oldValue) {
-        this.clone[key] = newValue;
         for (var index = 0; index < this.listeners.length; index++) {
             var listener = this.listeners[index];
             if (listener.key === key.toString() || listener.key === "") {
-                listener.cb(newValue, oldValue);
+                listener.cb(newValue, oldValue, key);
             }
         }
     };
+    /**
+     *
+     *
+     * @param {IListenerFull} listener
+     * @returns
+     *
+     * @memberOf Watchable
+     */
     Watchable.prototype.registerListener = function (listener) {
         listener.name = (listener.name === void 0 ? "" : listener.name.toString());
         listener.key = (listener.key === void 0 ? "" : listener.key.toString());
@@ -43,6 +70,14 @@ var Watchable = (function () {
         });
         return this;
     };
+    /**
+     *
+     *
+     * @param {IListener} [listener={ name: "" }]
+     * @returns
+     *
+     * @memberOf Watchable
+     */
     Watchable.prototype.removeListener = function (listener) {
         if (listener === void 0) { listener = { name: "" }; }
         listener.name = (listener.name === void 0 ? "" : listener.name.toString());
