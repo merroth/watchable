@@ -1,83 +1,55 @@
-/**
- * Used when removing a listener
- * 
- * @interface IListener
- */
 interface IListener {
 	name: string,
 	key?: string,
 }
-/**
- * Extends listener
- * Used when registering a listener
- * 
- * @interface IListenerFull
- * @extends {IListener}
- */
 interface IListenerFull extends IListener {
-	cb: (newValue?, oldValue?, key?) => any
+	cb: (newValue, oldValue) => any
 }
-/**
- * 
- * 
- * @class Watchable
- */
-class Watchable {
-	/**
-	 * Creates an instance of Watchable.
-	 * @param {Object} properties 
-	 * @param {IListenerFull[]} [listeners=[]] 
-	 * 
-	 * @memberOf Watchable
-	 */
-	constructor(private properties: Object, private listeners: IListenerFull[] = []) {
-		var self = this;
 
+class Watchable {
+	private clone: any;
+	static instance(properties, listeners: IListenerFull[] = []) {
+		var w = new Watchable(properties, listeners);
+		return w.properties;
+	}
+	constructor(private properties, private listeners: IListenerFull[] = []) {
+		var self = this;
+		this.clone = JSON.parse(JSON.stringify(properties));
 		for (var key in properties) {
 			if (properties.hasOwnProperty(key)) {
-				var value = properties[key];
-				(function (a, b, c) {
+				(function (a, b) {
 					Object.defineProperty(a, b, {
 						get: function () {
-							return c;
+							return self.clone[b];
 						},
 						set: function (newValue) {
-							var o = c;
-							c = newValue;
-							self.setter(b, newValue, o);
+							self.setter(b, newValue);
 						}
 					});
-				})(properties, key, value)
+				})(properties, key)
 			}
 		}
-
+		Object.defineProperty(properties, "WatchAble", {
+			value: self,
+			writable: true
+		});
 	}
-	/**
-	 * 
-	 * 
-	 * @private
-	 * @param {string} key 
-	 * @param {*} newValue 
-	 * @param {*} oldValue 
-	 * 
-	 * @memberOf Watchable
-	 */
-	private setter(key: string, newValue: any, oldValue: any) {
+
+	private setter(key, value) {
 		for (var index = 0; index < this.listeners.length; index++) {
 			var listener = this.listeners[index];
 			if (listener.key === key.toString() || listener.key === "") {
-				listener.cb(newValue, oldValue, key);
+				let cloneVal = this.clone[key];
+				this.clone[key] = value;
+				listener.cb.call(this.properties, value, cloneVal);
 			}
 		}
 	}
-	/**
-	 * 
-	 * 
-	 * @param {IListenerFull} listener 
-	 * @returns 
-	 * 
-	 * @memberOf Watchable
-	 */
+
+	private getter(key) {
+		return this.clone[key];
+	}
+
 	public registerListener(listener: IListenerFull) {
 		listener.name = (listener.name === void 0 ? "" : listener.name.toString())
 		listener.key = (listener.key === void 0 ? "" : listener.key.toString())
@@ -87,17 +59,9 @@ class Watchable {
 			cb: listener.cb,
 			key: listener.key
 		});
-
 		return this;
 	}
-	/**
-	 * 
-	 * 
-	 * @param {IListener} [listener={ name: "" }] 
-	 * @returns 
-	 * 
-	 * @memberOf Watchable
-	 */
+
 	public removeListener(listener: IListener = { name: "" }) {
 		listener.name = (listener.name === void 0 ? "" : listener.name.toString())
 		listener.key = (listener.key === void 0 ? "" : listener.key.toString())
@@ -105,6 +69,7 @@ class Watchable {
 		this.listeners = this.listeners.filter(function (suspect) {
 			return (listener.key === suspect.key && listener.name === suspect.name) === false;
 		});
+
 
 		return this;
 	}
